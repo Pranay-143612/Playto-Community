@@ -58,3 +58,13 @@ class Like(models.Model):
     def clean(self):
         if not self.post and not self.comment:
             raise ValidationError('Like must be for a post or a comment.')
+
+class KarmaTransaction(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='karma_transactions')
+    points = models.IntegerField()
+    post = models.ForeignKey(Post, null=True, blank=True, on_delete=models.CASCADE)
+    comment = models.ForeignKey(Comment, null=True, blank=True, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} +{self.points}"

@@ -1,6 +1,8 @@
 from rest_framework import serializers
-from .models import Post, Comment, Like
+from .models import Post, Comment, Like, KarmaTransaction
 from django.contrib.auth.models import User
+from django.db import transaction
+from rest_framework.exceptions import ValidationError
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,7 +49,54 @@ class CommentSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context['request'].user
         return Comment.objects.create(author=user, **validated_data)
+    
 
 
+class LikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = ['id', 'post', 'comment']
+
+    def validate(self, data):
+        if not data.get('post') and not data.get('comment'):
+            raise serializers.ValidationError(
+                "Like must be for a post or a comment"
+            )
+        return data
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+
+        with transaction.atomic():
+            like = Like.objects.create(
+                user=user,
+                **validated_data
+            )
+
+        return like
+    
+#karmatransaction
+
+def create(self, validated_data):
+    user = self.context['request'].user
+
+    with transaction.atomic():
+        like = Like.objects.create(user=user, **validated_data)
+
+        # Karma logic
+        if like.post:
+            KarmaTransaction.objects.create(
+                user=like.post.author,
+                points=5,
+                post=like.post
+            )
+        elif like.comment:
+            KarmaTransaction.objects.create(
+                user=like.comment.author,
+                points=1,
+                comment=like.comment
+            )
+
+    return like
 
 
