@@ -68,35 +68,20 @@ class LikeSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
 
         with transaction.atomic():
-            like = Like.objects.create(
-                user=user,
-                **validated_data
-            )
+            like = Like.objects.create(user=user, **validated_data)
+
+            # ✅ Karma logic
+            if like.post:
+                KarmaTransaction.objects.create(
+                    user=like.post.author,
+                    points=5,
+                    post=like.post
+                )
+            elif like.comment:
+                KarmaTransaction.objects.create(
+                    user=like.comment.author,
+                    points=1,
+                    comment=like.comment
+                )
 
         return like
-    
-#karmatransaction
-
-def create(self, validated_data):
-    user = self.context['request'].user
-
-    with transaction.atomic():
-        like = Like.objects.create(user=user, **validated_data)
-
-        # Karma logic
-        if like.post:
-            KarmaTransaction.objects.create(
-                user=like.post.author,
-                points=5,
-                post=like.post
-            )
-        elif like.comment:
-            KarmaTransaction.objects.create(
-                user=like.comment.author,
-                points=1,
-                comment=like.comment
-            )
-
-    return like
-
-
