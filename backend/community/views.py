@@ -1,13 +1,16 @@
-from django.shortcuts import render
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from .models import Post
-from .serializers import PostSerializer
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics
+from .models import Post, Comment
+from .serializers import PostSerializer, CommentSerializer
 
-class PostListAPIView(APIView):
-    def get(self, request):
-        # Efficient query: fetch author in same query
-        posts = Post.objects.select_related('author').all().order_by('-created_at')
-        serializer = PostSerializer(posts, many=True)
-        return Response(serializer.data)
+# List & Create posts
+class PostListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Post.objects.select_related('author').all().order_by('-created_at')
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
 
+# List & Create comments
+class CommentListCreateAPIView(generics.ListCreateAPIView):
+    queryset = Comment.objects.select_related('author', 'post').prefetch_related('replies').all()
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated]

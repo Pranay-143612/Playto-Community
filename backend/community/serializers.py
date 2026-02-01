@@ -7,6 +7,9 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username']
 
+
+#post serilizer
+
 class PostSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     like_count = serializers.SerializerMethodField()
@@ -21,3 +24,30 @@ class PostSerializer(serializers.ModelSerializer):
 
     def get_comment_count(self, obj):
         return obj.comments.count()
+    def create(self, validated_data):
+        user = self.context['request'].user
+        return Post.objects.create(author=user, **validated_data)
+
+#comment serializers
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = UserSerializer(read_only=True)
+    replies = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'post', 'author', 'parent', 'content', 'created_at', 'replies']
+
+    def get_replies(self, obj):
+        # recursive serialization for nested comments
+        qs = obj.replies.all()
+        serializer = CommentSerializer(qs, many=True)
+        return serializer.data
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        return Comment.objects.create(author=user, **validated_data)
+
+
+
+
