@@ -70,7 +70,6 @@ class LikeSerializer(serializers.ModelSerializer):
         with transaction.atomic():
             like = Like.objects.create(user=user, **validated_data)
 
-            # ✅ Karma logic
             if like.post:
                 KarmaTransaction.objects.create(
                     user=like.post.author,
