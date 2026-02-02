@@ -1,0 +1,41 @@
+.Dashboard {
+    max-width: 600px;
+    margin: 20px auto;
+    font-family: sans-serif;
+}
+
+.new-post-form {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+
+.new-post-form textarea {
+    resize: none;
+    padding: 10px;
+    font-size: 16px;
+    height: 80px;
+    margin-bottom: 10px;
+}
+
+.new-post-form button {
+    padding: 10px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.posts-list .post {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+}
+
+.posts-list .post .author {
+    font-weight: bold;
+}
+
+.posts-list .post .meta {
+    font-size: 12px;
+    color: #555;
+}

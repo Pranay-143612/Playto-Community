@@ -3,7 +3,8 @@ from .views import (
     PostListCreateAPIView,
     CommentListCreateAPIView,
     LikeCreateAPIView,
-    LeaderboardView
+    LeaderboardView,
+    EmailLoginAPIView
 )
 
 urlpatterns = [
@@ -11,4 +12,5 @@ urlpatterns = [
     path('comments/', CommentListCreateAPIView.as_view()),
     path('like/', LikeCreateAPIView.as_view()),
     path('leaderboard/', LeaderboardView.as_view()),
+    path('login/', EmailLoginAPIView.as_view()),
 ]

@@ -1,0 +1,35 @@
+.post-card {
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.post-author {
+    font-weight: bold;
+}
+
+.post-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+}
+
+.post-actions button {
+    background-color: #3b82f6;
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.post-actions button:hover {
+    background-color: #2563eb;
+}
+
+.post-comments {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: #555;
+}

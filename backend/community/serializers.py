@@ -4,14 +4,27 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
+# ----------------- User -----------------
+# serializers.py
+
+
 class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = User
-        fields = ['id', 'username']
+        fields = ['email']
+
+    def create(self, validated_data):
+        user = User(
+            email=validated_data['email']
+        )
+        user.set_password(validated_data['email'])
+        user.save()
+        return user
 
 
-#post serilizer
-
+# ----------------- Post -----------------
 class PostSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     like_count = serializers.SerializerMethodField()
@@ -26,12 +39,12 @@ class PostSerializer(serializers.ModelSerializer):
 
     def get_comment_count(self, obj):
         return obj.comments.count()
+
     def create(self, validated_data):
         user = self.context['request'].user
         return Post.objects.create(author=user, **validated_data)
 
-#comment serializers
-
+# ----------------- Comment -----------------
 class CommentSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)
     replies = serializers.SerializerMethodField()
@@ -41,7 +54,6 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ['id', 'post', 'author', 'parent', 'content', 'created_at', 'replies']
 
     def get_replies(self, obj):
-        # recursive serialization for nested comments
         qs = obj.replies.all()
         serializer = CommentSerializer(qs, many=True)
         return serializer.data
@@ -49,9 +61,8 @@ class CommentSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context['request'].user
         return Comment.objects.create(author=user, **validated_data)
-    
 
-
+# ----------------- Like -----------------
 class LikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Like
@@ -59,17 +70,19 @@ class LikeSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         if not data.get('post') and not data.get('comment'):
-            raise serializers.ValidationError(
-                "Like must be for a post or a comment"
-            )
+            raise ValidationError("Like must be for a post or a comment")
         return data
 
     def create(self, validated_data):
         user = self.context['request'].user
 
         with transaction.atomic():
-            like = Like.objects.create(user=user, **validated_data)
+            # Prevent double-like
+            like, created = Like.objects.get_or_create(user=user, **validated_data)
+            if not created:
+                raise ValidationError("You have already liked this post/comment.")
 
+            # Karma logic
             if like.post:
                 KarmaTransaction.objects.create(
                     user=like.post.author,

@@ -8,25 +8,52 @@ from django.db.models import Sum
 from datetime import timedelta
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.contrib.auth.models import User
+from rest_framework import status
 
+class EmailLoginAPIView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
 
-# List & Create posts
+        if not email:
+            return Response(
+                {"error": "Email is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user, created = User.objects.get_or_create(
+            username=email,
+            defaults={"email": email}
+        )
+
+        return Response({
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "created": created
+        })
+
+# ----------------- Posts -----------------
 class PostListCreateAPIView(generics.ListCreateAPIView):
-    queryset = Post.objects.select_related('author').all().order_by('-created_at')
+    queryset = Post.objects.select_related('author').prefetch_related(
+        'comments', 'comments__replies'
+    ).all().order_by('-created_at')
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
 
-# List & Create comments
+# ----------------- Comments -----------------
 class CommentListCreateAPIView(generics.ListCreateAPIView):
     queryset = Comment.objects.select_related('author', 'post').prefetch_related('replies').all()
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
 
+# ----------------- Likes -----------------
 class LikeCreateAPIView(CreateAPIView):
     queryset = Like.objects.all()
     serializer_class = LikeSerializer
     permission_classes = [IsAuthenticated]
 
+# ----------------- Leaderboard -----------------
 class LeaderboardView(APIView):
     def get(self, request):
         last_24_hours = timezone.now() - timedelta(hours=24)
@@ -40,4 +67,6 @@ class LeaderboardView(APIView):
         )
 
         return Response(leaderboard)
+
+
 
